@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; width: 90%; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      #users { width: 9%; background: #eee; float: right;}
+
+      #msg{
+        display: none;
+      }
+    </style>
+  </head>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+
+      $(document).ready(function() {
+      dBug("Document is ready!");
+
+      var $nickform = $('#nickform');
+      var $nickname = $('#nickname');
+      var $nickbox = $('#nick');
+      var $users = $('#users');
+
+      var appender = false;
+      
+
+      var socket = io();
+        $('form').submit(function(){
+          if(appender){
+            socket.emit('chat message', $('#m').val());
+            $('#messages').append($('<li>').text(msg.nick + ": " + msg.data));
+          };
+        $('#m').val('');
+      return false;
+      });
+
+      $nickform.submit(function(e) {
+        e.preventDefault();
+        socket.emit('new user', $nickname.val(), function(data){
+            if (data) {
+                $('#nick').hide();
+                $('#msg').show();
+                appender = true;
+            } else {
+                $('#messages').append($('<li>').text('that username is already taken.'));
+            }
+        });
+        dBug($nickname.val());
+        $nickname.val('');
+      });
+
+      socket.on('chat message', function(msg){
+          $('#messages').append($('<li>').text(msg.nick + ": " + msg.data));
+      });
+
+      socket.on('usernames', function(data){
+        dBug("usernames");
+        var html= '';
+        for(i=0; i < data.length; i++){
+          html += data[i] + '<br/>';
+        };
+        $users.html(html);
+      });
+
+      function dBug(data){
+        console.log(data);
+      };
+    });
+
+  </script>
+
+  <body>
+    <div id="msgWrap">
+
+      <div id="users"></div>
+
+      <ul id="messages"></ul>
+
+      <div id="msg">
+        <form action="">
+          <input id="m" autocomplete="off" /><button>Send</button>
+        </form>
+      </div>
+
+      <div id="nick">
+          <form action="" id=nickform>
+            <input id="nickname" autocomplete="off" placeholder="Enter a nickname" /><button>Submit Name</button>
+          </form>
+      </div>
+
+    </div>
+  </body>
+</html>
